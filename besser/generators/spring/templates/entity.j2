@@ -1,0 +1,15 @@
+package {{ package_name }};
+
+{% for import in imports -%}
+import {{ import }};
+{% endfor -%}
+
+{% if is_abstract %}
+@MappedSuperclass
+{% else %}
+@Entity
+@Table(name="{{ table_name }}")
+{% endif -%}
+public{% if is_abstract %} abstract{% endif %} class {{ cls.name }}{% if parent %} extends {{parent}}{% endif %} {
+
+}

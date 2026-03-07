@@ -1,0 +1,61 @@
+package {{ package_name }};
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import java.util.*;
+
+@Entity
+@Table(name = "{{ class.name|lower }}")
+public class {{ class.name }} {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+{% for attr in attributes %}
+
+{% if not attr.optional %}
+    @NotNull
+{% endif %}
+    @Column(name = "{{ attr.column }}")
+    {{ attr.visibility }} {{ attr.type }} {{ attr.name }};
+
+{% endfor %}
+
+{% for attr in enum_attributes %}
+
+    @Enumerated(EnumType.STRING)
+    {{ attr.visibility }} {{ attr.type }} {{ attr.name }};
+
+{% endfor %}
+
+{% for rel in relations %}
+
+{{ rel.annotation }}
+    {{ rel.visibility }} {{ rel.type }} {{ rel.name }}{% if rel.collection %} = new ArrayList<>(){% endif %};
+
+{% endfor %}
+
+    public {{ class.name }}() {}
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+{% for field in fields %}
+
+    public {{ field.type }} get{{ field.name|capitalize }}() {
+        return {{ field.name }};
+    }
+
+    public void set{{ field.name|capitalize }}({{ field.type }} {{ field.name }}) {
+        this.{{ field.name }} = {{ field.name }};
+    }
+
+{% endfor %}
+
+}
