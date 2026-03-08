@@ -1,9 +1,5 @@
 package {{ package_name }};
 
-public enum {{ enum.name }} {
-
-{% for lit in enum.literals %}
-    {{ lit.name }}{% if not loop.last %},{% endif %}
-{% endfor %}
-
+public enum {{ name }} {
+    {% for lit in literals %}{{ lit.name }}{% if not loop.last %}, {% endif %}{% endfor %}
 }

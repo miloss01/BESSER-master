@@ -14,7 +14,7 @@ import shutil
 
 # Uvezi sa eksplicitnom putanjom
 from besser.BUML.metamodel.structural.structural import (
-    DomainModel, Class, Generalization, Property, Type, Association, Enumeration, EnumerationLiteral
+    DateTimeType, DomainModel, Class, Generalization, IntegerType, Property, StringType, TimeDeltaType, Type, Association, Enumeration, EnumerationLiteral
 )
 from besser.generators.spring.generator import SpringEntityGenerator
 
@@ -23,19 +23,26 @@ def proba_jednostavna_klasa():
     current_dir = Path(__file__).parent
     output_dir = current_dir / "generated"
     output_dir.mkdir(exist_ok=True)
+
+    role = Enumeration(name="Role", literals={EnumerationLiteral(name="USER"), EnumerationLiteral(name="ADMIN")})
+    hand = Enumeration(name="Hand", literals={EnumerationLiteral(name="LEFT"), EnumerationLiteral(name="RIGHT")})
     
     user = Class(name="User")
-    user.add_attribute(Property(name="email", type=Type("String")))
-    user.add_attribute(Property(name="firstName", type=Type("String")))
+    user.add_attribute(Property(name="email", type=StringType, is_id=True, is_optional=True))
+    user.add_attribute(Property(name="firstName", type=StringType, is_optional=True, default_value="John"))
+    user.add_attribute(Property(name="age", type=IntegerType, default_value=2))
+    user.add_attribute(Property(name="role", type=role, visibility="private"))
+    user.add_attribute(Property(name="birthday", type=TimeDeltaType, visibility="protected"))
+    user.add_attribute(Property(name="hand", type=hand))
 
     thing = Class(name="Thing", is_abstract=True)
 
     computer = Class(name="Computer")
-    computer.add_attribute(Property(name="name", type=Type("String")))
+    computer.add_attribute(Property(name="name", type=StringType))
     
     gen1 = Generalization(general=thing, specific=computer)
 
-    model = DomainModel(name="proba", types={user, thing, computer}, generalizations={gen1})
+    model = DomainModel(name="proba", types={user, thing, computer, role, hand}, generalizations={gen1})
 
     generator = SpringEntityGenerator(
         model,
