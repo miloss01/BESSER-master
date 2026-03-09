@@ -1,5 +1,5 @@
 package spring.entities;
 
 public enum Role {
-    ADMIN, USER
+    USER, ADMIN
 }

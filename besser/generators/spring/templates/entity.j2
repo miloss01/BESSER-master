@@ -20,8 +20,12 @@ public{% if is_abstract %} abstract{% endif %} class {{ cls.name }}{% if parent 
     @Enumerated(EnumType.STRING)
     {% else -%}
     @Column(name = "{{ attribute.column_name }}"{% if not attribute.is_optional %}, nullable = false{% endif %})
-    {% endif %}
+    {% endif -%}
+    {% if not attribute.is_list %}
     {{- attribute.visibility }} {{ attribute.type }} {{ attribute.name }}{% if attribute.default_value %} = {{ attribute.default_value }}{% endif %};
+    {%- else -%}
+    {{- attribute.visibility }} {{ attribute.type }} {{ attribute.name }} = new ArrayList<>({% if attribute.default_value %}Arrays.asList({{ attribute.default_value }}){% endif %});
+    {%- endif %}
     {% endfor -%}
 
     {% if not is_abstract %}

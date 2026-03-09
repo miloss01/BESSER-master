@@ -42,34 +42,44 @@ class SpringEntityGenerator(GeneratorInterface):
         env = Environment(loader=FileSystemLoader(templates_path))
         entity_template = env.get_template("entity.j2")
 
-        imports: List[str] = self._get_default_imports() + self._get_specific_imports_for_class(cls)
+        imports: set[str] = self._get_default_imports().union(self._get_specific_imports_for_class(cls))
 
         attributes: List[object] = []
 
         for attr in cls.attributes:
             is_enum: bool = any(attr.type.name == enum.name for enum in self.enumerations)
+            is_list: bool = attr.multiplicity.max != 1
+            attr_type = None
+
+            if is_enum:
+                attr_type = attr.type.name
+            else:
+                attr_type = self.JAVA_TYPES[attr.type.name]
+            if is_list:
+                attr_type = f"List<{attr_type}>"
 
             attributes.append({
                 "is_id": attr.is_id,
                 "column_name": self._to_snake_case(attr.name),
                 "is_optional": attr.is_optional,
                 "is_enum": is_enum,
+                "is_list": is_list,
                 "visibility": attr.visibility,
-                "type": self.JAVA_TYPES[attr.type.name] if not is_enum else attr.type.name,
+                "type": attr_type,
                 "name": attr.name,
-                "default_value": f"\"{attr.default_value}\"" if attr.default_value and attr.type.name == "str" else attr.default_value
+                "default_value": f"\"{attr.default_value}\"" if attr.default_value and attr.type.name == "str" and not is_list else attr.default_value
             })
 
         context = {
             "cls": cls,
             "package_name": self.package_name,
-            "imports": imports,
+            "imports": sorted(list(imports)),
             "is_abstract": cls.is_abstract,
             "table_name": self._pluralize(cls.name.lower()),
             "parent": cls.parents().pop().name if cls.parents() else None,
             "attributes": sorted(
                             attributes,
-                            key=lambda a: (not a["is_id"], not a["is_enum"], a["name"])
+                            key=lambda a: (not a["is_id"], not a["is_enum"], not a["is_list"], a["name"])
                         )
         }
         
@@ -93,31 +103,37 @@ class SpringEntityGenerator(GeneratorInterface):
             generated_code = entity_template.render(**context)
             f.write(generated_code)
 
-    def _get_default_imports(self) -> List[str]:
-        return [
-            "jakarta.persistence.Entity",
-            "jakarta.persistence.Table",
-            "jakarta.persistence.Id",
-            "jakarta.persistence.GeneratedValue",
-            "jakarta.persistence.Column",
-        ]
+    def _get_default_imports(self) -> set[str]:
+        return set([
+            "javax.persistence.Entity",
+            "javax.persistence.Table",
+            "javax.persistence.Id",
+            "javax.persistence.GeneratedValue",
+            "javax.persistence.GenerationType",
+            "javax.persistence.Column",
+        ])
     
-    def _get_specific_imports_for_class(self, cls: Class) -> List[str]:
-        imports: List[str] = []
+    def _get_specific_imports_for_class(self, cls: Class) -> set[str]:
+        imports: set[str] = set()
 
         if cls.is_abstract:
-            imports.append("javax.persistence.MappedSuperclass")
+            imports.add("javax.persistence.MappedSuperclass")
 
         if any(any(attr.type.name == enum.name for enum in self.enumerations) for attr in cls.attributes):
-            imports.append("jakarta.persistence.Enumerated")
+            imports.add("javax.persistence.Enumerated")
+            imports.add("javax.persistence.EnumType")
 
         for attr in cls.attributes:
             if attr.type.name == DateType.name:
-                imports.append("java.time.LocalDate")
+                imports.add("java.time.LocalDate")
             elif attr.type.name in [DateTimeType.name, TimeType.name]:
-                imports.append("java.time.LocalDateTime")
+                imports.add("java.time.LocalDateTime")
             elif attr.type.name == TimeDeltaType.name:
-                imports.append("java.time.Duration")
+                imports.add("java.time.Duration")
+            elif attr.multiplicity.max != 1:
+                imports.add("java.util.List")
+                imports.add("java.util.ArrayList")
+                imports.add("java.util.Arrays")
 
         return imports
     

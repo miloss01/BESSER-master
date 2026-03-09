@@ -1,12 +1,15 @@
 package spring.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Column;
-import jakarta.persistence.Enumerated;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name="users")
@@ -17,11 +20,8 @@ public class User {
     @Column(name = "email")
     public String email;
     
-    @Enumerated(EnumType.STRING)
-    public Hand hand;
-    
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @Column(name = "nicknames", nullable = false)
+    public List<Float> nicknames = new ArrayList<>(Arrays.asList(1.2f, 3.2f));
     
     @Column(name = "age", nullable = false)
     public Integer age = 2;
@@ -34,10 +34,9 @@ public class User {
     
     public User() { }
 
-    public User(String email, Hand hand, Role role, Integer age, Duration birthday, String firstName) {
+    public User(String email, List<Float> nicknames, Integer age, Duration birthday, String firstName) {
         this.email = email;
-        this.hand = hand;
-        this.role = role;
+        this.nicknames = nicknames;
         this.age = age;
         this.birthday = birthday;
         this.firstName = firstName;
@@ -51,20 +50,12 @@ public class User {
         this.email = email;
     }
     
-    public Hand getHand() {
-        return this.hand;
+    public List<Float> getNicknames() {
+        return this.nicknames;
     }
 
-    public void setHand(Hand hand) {
-        this.hand = hand;
-    }
-    
-    public Role getRole() {
-        return this.role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
+    public void setNicknames(List<Float> nicknames) {
+        this.nicknames = nicknames;
     }
     
     public Integer getAge() {
