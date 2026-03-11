@@ -1,9 +1,10 @@
+from collections import defaultdict
 import os
 import re
 from typing import List
 from jinja2 import Environment, FileSystemLoader
 from besser.BUML.metamodel.structural import DomainModel
-from besser.BUML.metamodel.structural.structural import Class, Enumeration, StringType, BooleanType, DateTimeType, DateType, FloatType, IntegerType, TimeDeltaType, TimeType
+from besser.BUML.metamodel.structural.structural import BinaryAssociation, Class, Enumeration, Property, StringType, BooleanType, DateTimeType, DateType, FloatType, IntegerType, TimeDeltaType, TimeType
 from besser.generators import GeneratorInterface
 
 class SpringEntityGenerator(GeneratorInterface):
@@ -29,14 +30,20 @@ class SpringEntityGenerator(GeneratorInterface):
 
     def generate(self):
         model: DomainModel = self.model
+        assoc_map: defaultdict[str, List[BinaryAssociation]] = defaultdict(list)
+
+        for assoc in model.associations:
+            end1, end2 = list(assoc.ends)
+            assoc_map[end1.type.name].append(assoc)
+            assoc_map[end2.type.name].append(assoc)
 
         for enum in model.get_enumerations():
             self._generate_enum_file(enum)
         
         for cls in model.classes_sorted_by_inheritance():
-            self._generate_class_file(cls)
+            self._generate_class_file(cls, assoc_map[cls.name])
 
-    def _generate_class_file(self, cls: Class):
+    def _generate_class_file(self, cls: Class, assocs_for_class: List[BinaryAssociation]):
         file_path = self.build_generation_path(file_name=f"{cls.name.capitalize()}.java")
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path))
@@ -44,6 +51,25 @@ class SpringEntityGenerator(GeneratorInterface):
 
         imports: set[str] = self._get_default_imports().union(self._get_specific_imports_for_class(cls))
 
+        context = {
+            "cls": cls,
+            "package_name": self.package_name,
+            "imports": sorted(list(imports)),
+            "is_abstract": cls.is_abstract,
+            "table_name": self._pluralize(cls.name.lower()),
+            "parent": cls.parents().pop().name if cls.parents() else None,
+            "attributes": sorted(
+                            self._prepare_attributes(cls),
+                            key=lambda a: (not a["is_id"], not a["is_enum"], not a["is_list"], a["name"])
+                        ),
+            "relations": self._prepare_relations(cls, assocs_for_class),
+        }
+
+        with open(file_path, mode="w", encoding="utf-8") as f:
+            generated_code = entity_template.render(**context)
+            f.write(generated_code)
+
+    def _prepare_attributes(self, cls: Class) -> List[object]:
         attributes: List[object] = []
 
         for attr in cls.attributes:
@@ -69,23 +95,65 @@ class SpringEntityGenerator(GeneratorInterface):
                 "name": attr.name,
                 "default_value": f"\"{attr.default_value}\"" if attr.default_value and attr.type.name == "str" and not is_list else attr.default_value
             })
-
-        context = {
-            "cls": cls,
-            "package_name": self.package_name,
-            "imports": sorted(list(imports)),
-            "is_abstract": cls.is_abstract,
-            "table_name": self._pluralize(cls.name.lower()),
-            "parent": cls.parents().pop().name if cls.parents() else None,
-            "attributes": sorted(
-                            attributes,
-                            key=lambda a: (not a["is_id"], not a["is_enum"], not a["is_list"], a["name"])
-                        )
-        }
         
-        with open(file_path, mode="w", encoding="utf-8") as f:
-            generated_code = entity_template.render(**context)
-            f.write(generated_code)
+        return attributes
+    
+    def _prepare_relations(self, cls: Class, assocs_for_class: List[BinaryAssociation]) -> List[object]:
+        relations: List[object] = []
+
+        for assoc in assocs_for_class:
+            ends: List[Property] = list(assoc.ends)
+            end1, end2 = ends
+
+            if end1.type.name == cls.name and end2.is_navigable:
+                source: Property = end1
+                target: Property = end2
+            elif end2.type.name == cls.name and end1.is_navigable:
+                source: Property = end2
+                target: Property = end1
+            else:
+                continue
+
+            bidirectional: bool = source.is_navigable and target.is_navigable
+            source_many = source.multiplicity.max != 1
+            target_many = target.multiplicity.max != 1
+
+            relation: str = None
+            mapped_by: str = None
+            owning: bool = True
+
+            if not source_many and not target_many:
+                relation = "OneToOne"
+                if bidirectional:
+                    mapped_by = source.name
+            elif not source_many and target_many:
+                relation = "OneToMany"
+                if bidirectional:
+                    owning = False
+                    mapped_by = source.name
+            elif source_many and not target_many:
+                relation = "ManyToOne"
+            elif source_many and target_many:
+                relation = "ManyToMany"
+                if bidirectional:
+                    mapped_by = source.name
+            
+            relations.append({
+                "assoc": assoc.name,
+                "source_property": source.name,
+                "target_property": target.name,
+                "source_cls": source.type.name,
+                "target_cls": target.type.name,
+                "relation": relation,
+                "mapped_by": mapped_by,
+                "join_column": f"{self._to_snake_case(target.type.name)}_id",
+                "owning": owning,
+                "is_list": target_many,
+                "type": f"List<{target.type.name}>" if target_many else target.type.name,
+                "to_snake_case": self._to_snake_case
+            })
+
+        return relations
 
     def _generate_enum_file(self, enum: Enumeration):
         file_path = self.build_generation_path(file_name=f"{enum.name.capitalize()}.java")
@@ -130,7 +198,8 @@ class SpringEntityGenerator(GeneratorInterface):
                 imports.add("java.time.LocalDateTime")
             elif attr.type.name == TimeDeltaType.name:
                 imports.add("java.time.Duration")
-            elif attr.multiplicity.max != 1:
+
+            if attr.multiplicity.max != 1:
                 imports.add("java.util.List")
                 imports.add("java.util.ArrayList")
                 imports.add("java.util.Arrays")

@@ -8,24 +8,19 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="computers")
+@Table(name = "computers")
 public class Computer extends Thing {
     
-    @Column(name = "name", nullable = false)
-    public String name;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User owner;
+    
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User ownerr;
     
     public Computer() { }
 
-    public Computer(String name) {
-        this.name = name;
-    }
     
-    public String getName() {
-        return this.name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
     
 }
