@@ -11,13 +11,11 @@ import javax.persistence.Table;
 @Table(name = "computers")
 public class Computer extends Thing {
     
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    private User owner;
-    
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User ownerr;
+    @ManyToMany
+    @JoinTable(name = "many_to_many",
+        joinColumns = @JoinColumn(name = "computer_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private List<User> owners = new ArrayList<>();
     
     public Computer() { }
 

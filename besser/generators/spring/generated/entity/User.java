@@ -24,7 +24,7 @@ public class User {
     @Column(name = "first_name")
     public String firstName = "John";
     
-    @OneToMany(mappedBy = "ownerr")
+    @ManyToMany(mappedBy = "owners")
     
     private List<Computer> computers = new ArrayList<>();
     
