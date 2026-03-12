@@ -10,6 +10,7 @@ from besser.BUML.metamodel.structural.structural import (
     BinaryAssociation, DateTimeType, DomainModel, Class, FloatType, Generalization, IntegerType, Multiplicity, Property, StringType, TimeDeltaType, Type, Association, Enumeration, EnumerationLiteral
 )
 from besser.generators.spring.spring_entity_generator import SpringEntityGenerator
+from besser.generators.spring.spring_backend_generator import SpringBackendGenerator
 
 def proba_jednostavna_klasa():
     current_dir = Path(__file__).parent
@@ -20,7 +21,8 @@ def proba_jednostavna_klasa():
     hand = Enumeration(name="Hand", literals={EnumerationLiteral(name="LEFT"), EnumerationLiteral(name="RIGHT")})
     
     user = Class(name="User")
-    user.add_attribute(Property(name="email", type=StringType, is_id=True, is_optional=True))
+    user.add_attribute(Property(name="id", type=IntegerType, is_id=True))
+    user.add_attribute(Property(name="email", type=StringType, is_optional=True))
     user.add_attribute(Property(name="firstName", type=StringType, is_optional=True, default_value="John"))
     # user.add_attribute(Property(name="age", type=IntegerType, default_value=2))
     user.add_attribute(Property(name="role", type=role, visibility="private"))
@@ -31,18 +33,19 @@ def proba_jednostavna_klasa():
     thing = Class(name="Thing", is_abstract=True)
 
     computer = Class(name="Computer")
-    # computer.add_attribute(Property(name="name", type=StringType))
+    computer.add_attribute(Property(name="id", type=IntegerType, is_id=True))
+    computer.add_attribute(Property(name="model", type=StringType))
     
     gen1 = Generalization(general=thing, specific=computer)
 
     # assoc = BinaryAssociation(name="onetoone", ends={
     #     Property(name="computer", type=computer, multiplicity=Multiplicity(1, 1), is_navigable=True),
-    #     Property(name="owner", type=user, multiplicity=Multiplicity(1, 1), is_navigable=True)
+    #     Property(name="owner", type=user, multiplicity=Multiplicity(1, 1), is_navigable=False)
     # })
 
-    # assoc2 = BinaryAssociation(name="onetomany", ends={
+    # assoc = BinaryAssociation(name="onetomany", ends={
     #     Property(name="ownerr", type=user, multiplicity=Multiplicity(1, 1), is_navigable=True),
-    #     Property(name="computers", type=computer, multiplicity=Multiplicity(0, "*"), is_navigable=True)
+    #     Property(name="computers", type=computer, multiplicity=Multiplicity(0, "*"), is_navigable=False)
     # })
 
     # assoc2 = BinaryAssociation(name="manytoone", ends={
@@ -57,10 +60,14 @@ def proba_jednostavna_klasa():
 
     model = DomainModel(name="proba", types={user, thing, computer, role, hand}, generalizations={gen1}, associations={assoc})
 
-    generator = SpringEntityGenerator(
-        model,
-        output_dir=output_dir,
-        package_name="spring.entities"
+    # generator = SpringEntityGenerator(
+    #     model,
+    #     output_dir=output_dir,
+    #     package_name="spring.entities"
+    # )
+
+    generator = SpringBackendGenerator(
+        model, "3.5.11", java_version="17", app_name="Transformers", output_dir=current_dir / "backend", package_name="com.transformers"
     )
     
     files = generator.generate()

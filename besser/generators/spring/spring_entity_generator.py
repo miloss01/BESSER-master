@@ -50,7 +50,9 @@ class SpringEntityGenerator(GeneratorInterface):
         env = Environment(loader=FileSystemLoader(templates_path))
         entity_template = env.get_template("entity.java.j2")
 
-        imports: set[str] = self._get_default_imports().union(self._get_specific_imports_for_class(cls))
+        relations: List[object] = self._prepare_relations(cls, assocs_for_class)
+
+        imports: set[str] = self._get_default_imports().union(self._get_specific_imports_for_class(cls, relations))
 
         context = {
             "cls": cls,
@@ -63,7 +65,7 @@ class SpringEntityGenerator(GeneratorInterface):
                             self._prepare_attributes(cls),
                             key=lambda a: (not a["is_id"], not a["is_enum"], not a["is_list"], a["name"])
                         ),
-            "relations": self._prepare_relations(cls, assocs_for_class),
+            "relations": relations,
         }
 
         with open(file_path, mode="w", encoding="utf-8") as f:
@@ -186,23 +188,23 @@ class SpringEntityGenerator(GeneratorInterface):
 
     def _get_default_imports(self) -> set[str]:
         return set([
-            "javax.persistence.Entity",
-            "javax.persistence.Table",
-            "javax.persistence.Id",
-            "javax.persistence.GeneratedValue",
-            "javax.persistence.GenerationType",
-            "javax.persistence.Column",
+            "jakarta.persistence.Entity",
+            "jakarta.persistence.Table",
+            "jakarta.persistence.Id",
+            "jakarta.persistence.GeneratedValue",
+            "jakarta.persistence.GenerationType",
+            "jakarta.persistence.Column",
         ])
     
-    def _get_specific_imports_for_class(self, cls: Class) -> set[str]:
+    def _get_specific_imports_for_class(self, cls: Class, relations: List[object]) -> set[str]:
         imports: set[str] = set()
 
         if cls.is_abstract:
-            imports.add("javax.persistence.MappedSuperclass")
+            imports.add("jakarta.persistence.MappedSuperclass")
 
         if any(any(attr.type.name == enum.name for enum in self.enumerations) for attr in cls.attributes):
-            imports.add("javax.persistence.Enumerated")
-            imports.add("javax.persistence.EnumType")
+            imports.add("jakarta.persistence.Enumerated")
+            imports.add("jakarta.persistence.EnumType")
 
         for attr in cls.attributes:
             if attr.type.name == DateType.name:
@@ -215,7 +217,28 @@ class SpringEntityGenerator(GeneratorInterface):
             if attr.multiplicity.max != 1:
                 imports.add("java.util.List")
                 imports.add("java.util.ArrayList")
+
+        for relation in relations:
+            if relation["is_list"]:
+                imports.add("java.util.List")
+                imports.add("java.util.ArrayList")
                 imports.add("java.util.Arrays")
+            if relation["relation"] == "OneToOne":
+                imports.add("jakarta.persistence.OneToOne")
+                if relation["owning"]:
+                    imports.add("jakarta.persistence.JoinColumn")
+            if relation["relation"] == "OneToMany":
+                imports.add("jakarta.persistence.OneToMany")
+                if relation["owning"]:
+                    imports.add("jakarta.persistence.JoinColumn")
+            if relation["relation"] == "ManyToOne":
+                imports.add("jakarta.persistence.ManyToOne")
+                imports.add("jakarta.persistence.JoinColumn")
+            if relation["relation"] == "ManyToMany":
+                imports.add("jakarta.persistence.ManyToMany")
+                if relation["owning"]:
+                    imports.add("jakarta.persistence.JoinTable")
+                    imports.add("jakarta.persistence.JoinColumn")
 
         return imports
     
