@@ -1,4 +1,4 @@
-package com.transformers.entities;
+package com.transformers.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +11,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,11 +29,17 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
     
+    @Column(name = "age", nullable = false)
+    public Integer age = 2;
+    
+    @Column(name = "birthday", nullable = false)
+    protected Duration birthday;
+    
+    @Column(name = "birthday2", nullable = false)
+    protected LocalDateTime birthday2;
+    
     @Column(name = "email")
     public String email;
-    
-    @Column(name = "first_name")
-    public String firstName = "John";
     
     @ManyToMany
     @JoinTable(name = "many_to_many",
@@ -41,11 +49,13 @@ public class User {
     
     public User() { }
 
-    public User(Integer id, Role role, String email, String firstName) {
+    public User(Integer id, Role role, Integer age, Duration birthday, LocalDateTime birthday2, String email) {
         this.id = id;
         this.role = role;
+        this.age = age;
+        this.birthday = birthday;
+        this.birthday2 = birthday2;
         this.email = email;
-        this.firstName = firstName;
     }
     
     public Integer getId() {
@@ -64,20 +74,36 @@ public class User {
         this.role = role;
     }
     
+    public Integer getAge() {
+        return this.age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+    
+    public Duration getBirthday() {
+        return this.birthday;
+    }
+
+    public void setBirthday(Duration birthday) {
+        this.birthday = birthday;
+    }
+    
+    public LocalDateTime getBirthday2() {
+        return this.birthday2;
+    }
+
+    public void setBirthday2(LocalDateTime birthday2) {
+        this.birthday2 = birthday2;
+    }
+    
     public String getEmail() {
         return this.email;
     }
 
     public void setEmail(String email) {
         this.email = email;
-    }
-    
-    public String getFirstname() {
-        return this.firstName;
-    }
-
-    public void setFirstname(String firstName) {
-        this.firstName = firstName;
     }
     
 }

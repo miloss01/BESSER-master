@@ -21,12 +21,13 @@ class SpringEntityGenerator(GeneratorInterface):
     }
 
     def __init__(self, model: DomainModel, 
-                 output_dir: str = "./generated/entities", 
-                 package_name: str = "com.example.entities"):
+                 output_dir: str = "./generated/entity", 
+                 package_name: str = "com.example.entity"):
         super().__init__(model, output_dir)
 
         self.package_name: str = package_name
         self.enumerations: set[Enumeration] = model.get_enumerations()
+        self.classes: List[Class] = model.classes_sorted_by_inheritance()
         self.relation_owners: dict[str, str] = self._get_relation_owner_map(model)
 
     def generate(self):
@@ -38,10 +39,10 @@ class SpringEntityGenerator(GeneratorInterface):
             assoc_map[end1.type.name].append(assoc)
             assoc_map[end2.type.name].append(assoc)
 
-        for enum in model.get_enumerations():
+        for enum in self.enumerations:
             self._generate_enum_file(enum)
         
-        for cls in model.classes_sorted_by_inheritance():
+        for cls in self.classes:
             self._generate_class_file(cls, assoc_map[cls.name])
 
     def _generate_class_file(self, cls: Class, assocs_for_class: List[BinaryAssociation]):
@@ -78,9 +79,10 @@ class SpringEntityGenerator(GeneratorInterface):
         for attr in cls.attributes:
             is_enum: bool = any(attr.type.name == enum.name for enum in self.enumerations)
             is_list: bool = attr.multiplicity.max != 1
+            is_class: bool = any(attr.type.name == c.name for c in self.classes)
             attr_type = None
 
-            if is_enum:
+            if is_enum or is_class:
                 attr_type = attr.type.name
             else:
                 attr_type = self.JAVA_TYPES[attr.type.name]

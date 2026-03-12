@@ -6,6 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from besser.BUML.metamodel.structural.structural import DomainModel
 from besser.generators.generator_interface import GeneratorInterface
 from besser.generators.spring.spring_entity_generator import SpringEntityGenerator
+from besser.generators.spring.spring_repository_generator import SpringRepositoryGenerator
 
 class SpringBackendGenerator(GeneratorInterface):
     
@@ -34,6 +35,7 @@ class SpringBackendGenerator(GeneratorInterface):
         self._generate_main_and_test_files()
         self._generate_properties_file()
         self._generate_entities()
+        self._generate_repositories()
 
     def _generate_pom_file(self):
         file_path = self.build_generation_path(file_name="pom.xml")
@@ -129,8 +131,18 @@ class SpringBackendGenerator(GeneratorInterface):
     def _generate_entities(self):
         generator = SpringEntityGenerator(
             self.model,
-            output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "entities",
-            package_name=f"{self.package_name}.entities"
+            output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "entity",
+            package_name=f"{self.package_name}.entity"
+        )
+
+        generator.generate()
+
+    def _generate_repositories(self):
+        generator = SpringRepositoryGenerator(
+            self.model,
+            f"{self.package_name}.entity",
+            output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "repository",
+            package_name=f"{self.package_name}.repository"
         )
 
         generator.generate()

@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from besser.BUML.metamodel.structural.structural import (
-    BinaryAssociation, DateTimeType, DomainModel, Class, FloatType, Generalization, IntegerType, Multiplicity, Property, StringType, TimeDeltaType, Type, Association, Enumeration, EnumerationLiteral
+    BinaryAssociation, DateTimeType, DateType, DomainModel, Class, FloatType, Generalization, IntegerType, Multiplicity, Property, StringType, TimeDeltaType, Type, Association, Enumeration, EnumerationLiteral
 )
 from besser.generators.spring.spring_entity_generator import SpringEntityGenerator
 from besser.generators.spring.spring_backend_generator import SpringBackendGenerator
@@ -19,16 +19,21 @@ def proba_jednostavna_klasa():
 
     role = Enumeration(name="Role", literals={EnumerationLiteral(name="USER"), EnumerationLiteral(name="ADMIN")})
     hand = Enumeration(name="Hand", literals={EnumerationLiteral(name="LEFT"), EnumerationLiteral(name="RIGHT")})
+
+    # address = Class(name="Address")
+    # address.add_attribute(Property(name="id", type=IntegerType, is_id=True))
     
     user = Class(name="User")
     user.add_attribute(Property(name="id", type=IntegerType, is_id=True))
     user.add_attribute(Property(name="email", type=StringType, is_optional=True))
-    user.add_attribute(Property(name="firstName", type=StringType, is_optional=True, default_value="John"))
-    # user.add_attribute(Property(name="age", type=IntegerType, default_value=2))
+    # user.add_attribute(Property(name="firstName", type=StringType, is_optional=True, default_value="John"))
+    user.add_attribute(Property(name="age", type=IntegerType, default_value=2))
     user.add_attribute(Property(name="role", type=role, visibility="private"))
-    # user.add_attribute(Property(name="birthday", type=TimeDeltaType, visibility="protected"))
+    user.add_attribute(Property(name="birthday", type=TimeDeltaType, visibility="protected"))
+    user.add_attribute(Property(name="birthday2", type=DateTimeType, visibility="protected"))
     # user.add_attribute(Property(name="hand", type=hand))
     # user.add_attribute(Property(name="nicknames", type=DateTimeType, multiplicity=Multiplicity(0, "*"), default_value="1.2f, 3.2f"))
+    # user.add_attribute(Property(name="address", type=address, visibility="protected"))
 
     thing = Class(name="Thing", is_abstract=True)
 
