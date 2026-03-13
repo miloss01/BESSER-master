@@ -5,11 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Entity
 @Table(name = "computers")
@@ -22,10 +18,6 @@ public class Computer extends Thing {
     
     @Column(name = "model", nullable = false)
     public String model;
-    
-    @ManyToMany(mappedBy = "computers")
-    
-    private List<User> owners = new ArrayList<>();
     
     public Computer() { }
 

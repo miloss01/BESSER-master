@@ -4,6 +4,7 @@ import com.transformers.entity.Computer;
 import com.transformers.repository.IComputerRepository;
 import com.transformers.service.interfaces.IComputerService;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,11 @@ public class ComputerService implements IComputerService {
     @Override
     public void delete(Computer computer) {
         _computerRepository.delete(computer);
+    }
+    
+    @Override
+    public List<Computer> findAll() {
+        return _computerRepository.findAll();
     }
     
     @Override

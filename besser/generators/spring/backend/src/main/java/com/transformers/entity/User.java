@@ -7,15 +7,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -40,12 +34,6 @@ public class User {
     
     @Column(name = "email")
     public String email;
-    
-    @ManyToMany
-    @JoinTable(name = "many_to_many",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "computer_id"))
-    private List<Computer> computers = new ArrayList<>();
     
     public User() { }
 

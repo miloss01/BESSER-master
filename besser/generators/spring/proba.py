@@ -58,12 +58,12 @@ def proba_jednostavna_klasa():
     #     Property(name="ownerr", type=user, multiplicity=Multiplicity(1, 1), is_navigable=True)
     # })
 
-    assoc = BinaryAssociation(name="ManyToMany", ends={
-        Property(name="computers", type=computer, multiplicity=Multiplicity(0, "*"), is_navigable=True),
-        Property(name="owners", type=user, multiplicity=Multiplicity(0, "*"), is_navigable=True)
-    })
+    # assoc = BinaryAssociation(name="ManyToMany", ends={
+    #     Property(name="computers", type=computer, multiplicity=Multiplicity(0, "*"), is_navigable=True),
+    #     Property(name="owners", type=user, multiplicity=Multiplicity(0, "*"), is_navigable=True)
+    # })
 
-    model = DomainModel(name="proba", types={user, thing, computer, role, hand}, generalizations={gen1}, associations={assoc})
+    model = DomainModel(name="proba", types={user, thing, computer, role, hand}, generalizations={gen1}, associations={})
 
     # generator = SpringEntityGenerator(
     #     model,

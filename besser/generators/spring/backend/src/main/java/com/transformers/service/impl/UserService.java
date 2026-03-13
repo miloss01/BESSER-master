@@ -7,6 +7,7 @@ import com.transformers.service.interfaces.IUserService;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,11 @@ public class UserService implements IUserService {
     @Override
     public void delete(User user) {
         _userRepository.delete(user);
+    }
+    
+    @Override
+    public List<User> findAll() {
+        return _userRepository.findAll();
     }
     
     @Override

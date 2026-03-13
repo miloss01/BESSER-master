@@ -5,7 +5,9 @@ from jinja2 import Environment, FileSystemLoader
 
 from besser.BUML.metamodel.structural.structural import DomainModel
 from besser.generators.generator_interface import GeneratorInterface
+from besser.generators.spring.spring_controller_generator import SpringControllerGenerator
 from besser.generators.spring.spring_entity_generator import SpringEntityGenerator
+from besser.generators.spring.spring_http_generator import SpringHttpGenerator
 from besser.generators.spring.spring_repository_generator import SpringRepositoryGenerator
 from besser.generators.spring.spring_service_generator import SpringServiceGenerator
 
@@ -38,6 +40,8 @@ class SpringBackendGenerator(GeneratorInterface):
         self._generate_entities()
         self._generate_repositories()
         self._generate_services()
+        self._generate_controllers()
+        self._generate_http()
 
     def _generate_pom_file(self):
         file_path = self.build_generation_path(file_name="pom.xml")
@@ -156,6 +160,25 @@ class SpringBackendGenerator(GeneratorInterface):
             f"{self.package_name}.repository",
             output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "service",
             package_name=f"{self.package_name}.service"
+        )
+
+        generator.generate()
+
+    def _generate_controllers(self):
+        generator = SpringControllerGenerator(
+            self.model,
+            f"{self.package_name}.entity",
+            f"{self.package_name}.service",
+            output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "controller",
+            package_name=f"{self.package_name}.controller"
+        )
+
+        generator.generate()
+
+    def _generate_http(self):
+        generator = SpringHttpGenerator(
+            self.model,
+            output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "http_test"
         )
 
         generator.generate()

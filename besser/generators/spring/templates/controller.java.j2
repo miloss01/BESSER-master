@@ -1,0 +1,59 @@
+package {{ package }};
+
+{% for import in imports %}
+import {{ import }};
+{% endfor %}
+
+@RestController
+@RequestMapping("/api/{{ cls[0] | lower + cls[1:] }}")
+public class {{ cls }}Controller {
+
+    @Autowired
+    private I{{ cls }}Service _{{ cls[0] | lower + cls[1:] }}Service;
+
+    @GetMapping
+    public ResponseEntity<List<{{ cls }}>> getAll() {
+        return ResponseEntity.ok(_{{ cls[0] | lower + cls[1:] }}Service.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<{{ cls }}> getById(@PathVariable Integer id) {
+        return _{{ cls[0] | lower + cls[1:] }}Service.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<{{ cls }}> create(@RequestBody {{ cls }} entity) {
+        {{ cls }} saved = _{{ cls[0] | lower + cls[1:] }}Service.save(entity);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<{{ cls }}> update(@PathVariable Integer id, @RequestBody {{ cls }} entity) {
+
+        Optional<{{ cls }}> existing = _{{ cls[0] | lower + cls[1:] }}Service.findById(id);
+
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        entity.setId(id);
+        {{ cls }} updated = _{{ cls[0] | lower + cls[1:] }}Service.save(entity);
+
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
+
+        Optional<{{ cls }}> existing = _{{ cls[0] | lower + cls[1:] }}Service.findById(id);
+
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        _{{ cls[0] | lower + cls[1:] }}Service.delete(existing.get());
+
+        return ResponseEntity.noContent().build();
+    }
+
+}

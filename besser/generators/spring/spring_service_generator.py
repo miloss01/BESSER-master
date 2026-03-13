@@ -48,6 +48,7 @@ class SpringServiceGenerator(GeneratorInterface):
 
         imports: set[str] = set()
         imports.add(f"{self.entity_package_name}.{cls.name}")
+        imports.add("java.util.List")
 
         if cls.attributes:
             imports.add("java.util.ArrayList")
@@ -121,7 +122,7 @@ class SpringServiceGenerator(GeneratorInterface):
         for method in context["methods"]:
             parameter: str = method["parameter"]
             tokens: List[str] = parameter.split(", ")
-            method["parameter_names"] = ", ".join(token.split(" ")[1] for token in tokens)
+            method["parameter_names"] = ", ".join(token.split(" ")[1] for token in tokens) if parameter else ""
 
         with open(file_path, mode="w", encoding="utf-8") as f:
             generated_code = service_template.render(**context)
@@ -129,6 +130,11 @@ class SpringServiceGenerator(GeneratorInterface):
 
     def _get_crud_methods(self, cls: Class) -> List[object]:
         return [
+            {
+                "return_value": f"List<{cls.name}>",
+                "name": "findAll",
+                "parameter": ""
+            },
             {
                 "return_value": f"Optional<{cls.name}>",
                 "name": "findById",

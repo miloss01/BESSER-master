@@ -1,0 +1,27 @@
+### GET ALL
+GET http://localhost:8080/api/computer
+Accept: application/json
+
+### GET BY ID
+GET http://localhost:8080/api/computer/<id>
+Accept: application/json
+
+### CREATE
+POST http://localhost:8080/api/computer
+Content-Type: application/json
+
+{
+  
+}
+
+### UPDATE
+PUT http://localhost:8080/api/computer/<id>
+Content-Type: application/json
+
+{
+  
+}
+
+### DELETE
+DELETE http://localhost:8080/api/computer/<id>
+Accept: application/json
