@@ -1,21 +1,22 @@
-package com.transformers.repository;
+package com.transformers.service.interfaces;
 
 import com.transformers.entity.Role;
 import com.transformers.entity.User;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
-@Repository
-public interface IUserRepository extends JpaRepository<User, Integer> {
+public interface IUserService {
 
+        void delete(User user);
         ArrayList<User> findAllByAge(Integer age);
         ArrayList<User> findAllByBirthday(Duration birthday);
         ArrayList<User> findAllByBirthday2(LocalDateTime birthday2);
         ArrayList<User> findAllByBirthday2Between(LocalDateTime start, LocalDateTime end);
         ArrayList<User> findAllByEmail(String email);
         ArrayList<User> findAllByRole(Role role);
+        Optional<User> findById(Integer id);
+        User save(User user);
         
 }

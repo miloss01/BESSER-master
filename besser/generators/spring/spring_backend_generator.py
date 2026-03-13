@@ -7,6 +7,7 @@ from besser.BUML.metamodel.structural.structural import DomainModel
 from besser.generators.generator_interface import GeneratorInterface
 from besser.generators.spring.spring_entity_generator import SpringEntityGenerator
 from besser.generators.spring.spring_repository_generator import SpringRepositoryGenerator
+from besser.generators.spring.spring_service_generator import SpringServiceGenerator
 
 class SpringBackendGenerator(GeneratorInterface):
     
@@ -36,6 +37,7 @@ class SpringBackendGenerator(GeneratorInterface):
         self._generate_properties_file()
         self._generate_entities()
         self._generate_repositories()
+        self._generate_services()
 
     def _generate_pom_file(self):
         file_path = self.build_generation_path(file_name="pom.xml")
@@ -143,6 +145,17 @@ class SpringBackendGenerator(GeneratorInterface):
             f"{self.package_name}.entity",
             output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "repository",
             package_name=f"{self.package_name}.repository"
+        )
+
+        generator.generate()
+
+    def _generate_services(self):
+        generator = SpringServiceGenerator(
+            self.model,
+            f"{self.package_name}.entity",
+            f"{self.package_name}.repository",
+            output_dir=self.output_dir / Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / "service",
+            package_name=f"{self.package_name}.service"
         )
 
         generator.generate()
