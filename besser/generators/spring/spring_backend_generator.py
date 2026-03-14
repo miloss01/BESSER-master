@@ -65,7 +65,7 @@ class SpringBackendGenerator(GeneratorInterface):
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path))
 
-        file_path = self.build_generation_path(file_name=self.output_dir / ".mvn" / "wrapper" / "maven-wrapper.properties")
+        file_path = self.build_generation_path(file_name=Path(self.output_dir, ".mvn", "wrapper", "maven-wrapper.properties"))
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         maven_wrapper_template = env.get_template("maven-wrapper.properties.j2")
 
@@ -73,7 +73,7 @@ class SpringBackendGenerator(GeneratorInterface):
             generated_code = maven_wrapper_template.render()
             f.write(generated_code)
 
-        file_path = self.build_generation_path(file_name=self.output_dir / ".mvn" / "mvnw")
+        file_path = self.build_generation_path(file_name=Path(self.output_dir, ".mvn", "mvnw"))
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         mvnw_template = env.get_template("mvnw.j2")
 
@@ -81,7 +81,7 @@ class SpringBackendGenerator(GeneratorInterface):
             generated_code = mvnw_template.render()
             f.write(generated_code)
 
-        file_path = self.build_generation_path(file_name=self.output_dir / ".mvn" / "mvnw.cmd")
+        file_path = self.build_generation_path(file_name=Path(self.output_dir, ".mvn", "mvnw.cmd"))
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         mvnw_cmd_template = env.get_template("mvnw.cmd.j2")
 

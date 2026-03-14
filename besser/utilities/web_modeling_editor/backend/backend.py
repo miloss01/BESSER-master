@@ -569,6 +569,8 @@ async def _handle_class_diagram_generation(
     # Generate based on generator type
     if generator_type == "django":
         return await _generate_django(buml_model, generator_class, config, temp_dir)
+    if generator_type == "spring":
+        return await _generate_spring(buml_model, generator_class, config, temp_dir)
     if generator_type == "sql":
         return await _generate_sql(buml_model, generator_class, config, temp_dir)
     if generator_type == "sqlalchemy":
@@ -963,6 +965,63 @@ async def _generate_django(buml_model, generator_class, config: dict, temp_dir: 
     finally:
         os.chdir(original_cwd)
         cleanup_temp_resources(temp_dir)
+
+async def _generate_spring(buml_model, generator_class, config: dict, temp_dir: str):
+    """Generate Spring project."""
+
+    if not config:
+        raise HTTPException(status_code=400, detail="Spring configuration is required")
+
+    project_dir = os.path.join("D:\\Faks\\Master\\Master rad\\BESSER-master\\besser\\utilities\\web_modeling_editor\\backend", config["project_name"])
+    print(project_dir)
+    # Clean up any existing project directory
+    if os.path.exists(project_dir):
+        shutil.rmtree(project_dir)
+
+    os.makedirs(temp_dir, exist_ok=True)
+    original_cwd = os.getcwd()
+    os.chdir(temp_dir)
+
+    try:
+        print(config)
+        generator_instance = generator_class(
+            model=buml_model,
+            spring_boot_version=config["spring_boot_version"],
+            java_version="17",
+            app_name=config["app_name"],
+            package_name=config["package_name"],
+            output_dir=project_dir,
+        )
+        print("posle")
+        generator_instance.generate()
+
+        # Wait for file system operations
+        await asyncio.sleep(1)
+
+        # Validate generation
+        if not os.path.exists(project_dir) or not os.listdir(project_dir):
+            raise ValueError("Spring project generation failed: Output directory is empty")
+
+        # Create ZIP file
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for root, _, files in os.walk(project_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arc_name = os.path.relpath(file_path, project_dir)
+                    zip_file.write(file_path, arc_name)
+
+        zip_buffer.seek(0)
+        file_name = get_filename_for_generator("spring")
+
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename={file_name}"},
+        )
+    finally:
+        os.chdir(original_cwd)
+        # cleanup_temp_resources(temp_dir)
 
 
 async def _generate_sql(buml_model, generator_class, config: dict, temp_dir: str):

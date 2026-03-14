@@ -11,6 +11,7 @@ from besser.BUML.metamodel.structural.structural import (
 )
 from besser.generators.spring.spring_entity_generator import SpringEntityGenerator
 from besser.generators.spring.spring_backend_generator import SpringBackendGenerator
+from besser.utilities.web_modeling_editor.backend.services.converters.buml_to_json.class_diagram_converter import class_buml_to_json
 
 def proba_jednostavna_klasa():
     current_dir = Path(__file__).parent
@@ -32,7 +33,7 @@ def proba_jednostavna_klasa():
     user.add_attribute(Property(name="birthday", type=TimeDeltaType, visibility="protected"))
     user.add_attribute(Property(name="birthday2", type=DateTimeType, visibility="protected"))
     # user.add_attribute(Property(name="hand", type=hand))
-    # user.add_attribute(Property(name="nicknames", type=DateTimeType, multiplicity=Multiplicity(0, "*"), default_value="1.2f, 3.2f"))
+    user.add_attribute(Property(name="nicknames", type=FloatType, multiplicity=Multiplicity(0, "*"), default_value="1.2f, 3.2f"))
     # user.add_attribute(Property(name="address", type=address, visibility="protected"))
 
     thing = Class(name="Thing", is_abstract=True)
@@ -48,10 +49,10 @@ def proba_jednostavna_klasa():
     #     Property(name="owner", type=user, multiplicity=Multiplicity(1, 1), is_navigable=False)
     # })
 
-    # assoc = BinaryAssociation(name="onetomany", ends={
-    #     Property(name="ownerr", type=user, multiplicity=Multiplicity(1, 1), is_navigable=True),
-    #     Property(name="computers", type=computer, multiplicity=Multiplicity(0, "*"), is_navigable=False)
-    # })
+    assoc = BinaryAssociation(name="onetomany", ends={
+        Property(name="ownerr", type=user, multiplicity=Multiplicity(1, 1), is_navigable=True),
+        Property(name="computers", type=computer, multiplicity=Multiplicity(0, "*"), is_navigable=False)
+    })
 
     # assoc2 = BinaryAssociation(name="manytoone", ends={
     #     Property(name="computerss", type=computer, multiplicity=Multiplicity(0, "*"), is_navigable=True),
@@ -76,6 +77,34 @@ def proba_jednostavna_klasa():
     )
     
     files = generator.generate()
+
+    json_model = class_buml_to_json(model)
+
+    import requests
+
+    res = requests.post("http://localhost:9000/besser_api/generate-output", json={
+        "title": "spring backendaa",
+        "config": {
+            "spring_boot_version": "3.5.11",
+            "java_version": "17",
+            "app_name": "Transformers",
+            "package_name": "com.transformers",
+            "project_name": "trans"
+        },
+        "model": {
+            "elements": json_model["elements"],
+            "relationships": json_model["relationships"]
+        },
+        "generator": "spring"
+    })
+    
+    # if res.status_code == 200:
+    #     with open("project.zip", "wb") as f:
+    #         f.write(res.content)
+
+    #     print("ZIP sacuvan kao project.zip")
+    # else:
+    #     print(res.status_code, res.text)
 
 if __name__ == "__main__":
     proba_jednostavna_klasa()
