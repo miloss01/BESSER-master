@@ -80,6 +80,15 @@ public{% if is_abstract %} abstract{% endif %} class {{ cls.name }}{% if parent 
     {%- endif %}
     {% endif -%}
 
+    {% for method in methods %}
+    {{ method.visibility }} {{ method.return_type }} {{ method.name }}(
+    {%- for parameter in method.parameters -%}
+    {{ parameter.type }} {{ parameter.name }}{% if not loop.last %}, {% endif %}
+    {%- endfor %}) {
+        {% if method.code %}{{ method.code }}{% else %}{% if method.return_type != "void" %}return null;{% endif %}{% endif %}
+    }
+    {% endfor -%}
+
     {% for attribute in attributes %}
     public {{ attribute.type }} get{{ attribute.name | capitalize }}() {
         return this.{{ attribute.name }};

@@ -972,8 +972,8 @@ async def _generate_spring(buml_model, generator_class, config: dict, temp_dir: 
     if not config:
         raise HTTPException(status_code=400, detail="Spring configuration is required")
 
-    project_dir = os.path.join("D:\\Faks\\Master\\Master rad\\BESSER-master\\besser\\utilities\\web_modeling_editor\\backend", config["project_name"])
-    print(project_dir)
+    project_dir = os.path.join(temp_dir, config["project_name"])
+    
     # Clean up any existing project directory
     if os.path.exists(project_dir):
         shutil.rmtree(project_dir)
@@ -983,7 +983,6 @@ async def _generate_spring(buml_model, generator_class, config: dict, temp_dir: 
     os.chdir(temp_dir)
 
     try:
-        print(config)
         generator_instance = generator_class(
             model=buml_model,
             spring_boot_version=config["spring_boot_version"],
@@ -992,7 +991,7 @@ async def _generate_spring(buml_model, generator_class, config: dict, temp_dir: 
             package_name=config["package_name"],
             output_dir=project_dir,
         )
-        print("posle")
+
         generator_instance.generate()
 
         # Wait for file system operations
@@ -1021,7 +1020,7 @@ async def _generate_spring(buml_model, generator_class, config: dict, temp_dir: 
         )
     finally:
         os.chdir(original_cwd)
-        # cleanup_temp_resources(temp_dir)
+        cleanup_temp_resources(temp_dir)
 
 
 async def _generate_sql(buml_model, generator_class, config: dict, temp_dir: str):

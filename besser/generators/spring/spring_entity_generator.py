@@ -4,7 +4,7 @@ import re
 from typing import List
 from jinja2 import Environment, FileSystemLoader
 from besser.BUML.metamodel.structural import DomainModel
-from besser.BUML.metamodel.structural.structural import BinaryAssociation, Class, Enumeration, Property, StringType, BooleanType, DateTimeType, DateType, FloatType, IntegerType, TimeDeltaType, TimeType
+from besser.BUML.metamodel.structural.structural import BinaryAssociation, Class, Enumeration, Parameter, Property, StringType, BooleanType, DateTimeType, DateType, FloatType, IntegerType, TimeDeltaType, TimeType
 from besser.generators import GeneratorInterface
 
 class SpringEntityGenerator(GeneratorInterface):
@@ -16,7 +16,7 @@ class SpringEntityGenerator(GeneratorInterface):
         FloatType.name: "Float",
         DateType.name: "LocalDate",
         DateTimeType.name: "LocalDateTime",
-        TimeType.name: "LocalDateTime",
+        TimeType.name: "LocalTime",
         TimeDeltaType.name: "Duration"
     }
 
@@ -66,7 +66,8 @@ class SpringEntityGenerator(GeneratorInterface):
                             self._prepare_attributes(cls),
                             key=lambda a: (not a["is_id"], not a["is_enum"], not a["is_list"], a["name"])
                         ),
-            "relations": relations,
+            "methods": self._prepare_methods(cls),
+            "relations": self._prepare_relations(cls, assocs_for_class),
         }
 
         with open(file_path, mode="w", encoding="utf-8") as f:
@@ -89,6 +90,24 @@ class SpringEntityGenerator(GeneratorInterface):
             if is_list:
                 attr_type = f"List<{attr_type}>"
 
+            default_value: str = ""
+
+            if attr.default_value:
+                if attr.type.name == DateType.name:
+                    default_value = f"""LocalDate.of{attr.default_value["year"], attr.default_value["month"], attr.default_value["day"]}"""
+                elif attr.type.name == DateTimeType.name:
+                    default_value = f"""LocalDateTime.of{attr.default_value["year"], attr.default_value["month"], attr.default_value["day"], attr.default_value["hour"], attr.default_value["minute"], attr.default_value["second"]}"""
+                elif attr.type.name == TimeType.name:
+                    default_value = f"""LocalTime.of{attr.default_value["hour"], attr.default_value["minute"], attr.default_value["second"]}"""
+                elif attr.type.name == TimeDeltaType.name:
+                    default_value = f"Duration.ofSeconds({attr.default_value})"
+                elif attr.type.name == "str":
+                    default_value = f"\"{attr.default_value}\""
+                elif is_enum:
+                    default_value = f"{attr.type.name}.{attr.default_value}"
+                else:
+                    default_value = attr.default_value
+
             attributes.append({
                 "is_id": attr.is_id,
                 "column_name": self._to_snake_case(attr.name),
@@ -98,10 +117,53 @@ class SpringEntityGenerator(GeneratorInterface):
                 "visibility": attr.visibility,
                 "type": attr_type,
                 "name": attr.name,
-                "default_value": f"\"{attr.default_value}\"" if attr.default_value and attr.type.name == "str" and not is_list else attr.default_value
+                "default_value": default_value
             })
         
         return attributes
+    
+    def _prepare_methods(self, cls: Class) -> List[object]:
+        methods: List[object] = []
+
+        for method in cls.methods:
+            method_return_type: str = ""
+
+            if not method.type:
+                method_return_type = "void"
+            else:
+                is_method_type_enum: bool = any(method.type.name == enum.name for enum in self.enumerations)
+                is_method_type_class: bool = any(method.type.name == c.name for c in self.classes)
+
+                if is_method_type_enum or is_method_type_class:
+                    method_return_type = method.type.name
+                else:
+                    method_return_type = self.JAVA_TYPES[method.type.name]
+
+            parameters: List[object] = []
+
+            for parameter in method.parameters:
+                is_enum: bool = any(parameter.type.name == enum.name for enum in self.enumerations)
+                is_class: bool = any(parameter.type.name == c.name for c in self.classes)
+
+                if is_enum or is_class:
+                    param_type = parameter.type.name
+                else:
+                    param_type = self.JAVA_TYPES[parameter.type.name]
+
+                parameters.append({
+                    "name": parameter.name,
+                    "type": param_type
+                })
+            
+            methods.append({
+                "name": method.name,
+                "visibility": method.visibility,
+                "return_type": method_return_type,
+                "code": method.code,
+                "parameters": parameters
+            })
+
+        return methods
     
     def _prepare_relations(self, cls: Class, assocs_for_class: List[BinaryAssociation]) -> List[object]:
         relations: List[object] = []
@@ -211,14 +273,39 @@ class SpringEntityGenerator(GeneratorInterface):
         for attr in cls.attributes:
             if attr.type.name == DateType.name:
                 imports.add("java.time.LocalDate")
-            elif attr.type.name in [DateTimeType.name, TimeType.name]:
+            elif attr.type.name == DateTimeType.name:
                 imports.add("java.time.LocalDateTime")
+            elif attr.type.name == TimeType.name:
+                imports.add("java.time.LocalTime")
             elif attr.type.name == TimeDeltaType.name:
                 imports.add("java.time.Duration")
 
             if attr.multiplicity.max != 1:
                 imports.add("java.util.List")
                 imports.add("java.util.ArrayList")
+                if attr.default_value:
+                    imports.add("java.util.Arrays")
+
+        for method in cls.methods:
+            if method.type:
+                if method.type.name == DateType.name:
+                    imports.add("java.time.LocalDate")
+                elif method.type.name == DateTimeType.name:
+                    imports.add("java.time.LocalDateTime")
+                elif method.type.name == TimeType.name:
+                    imports.add("java.time.LocalTime")
+                elif method.type.name == TimeDeltaType.name:
+                    imports.add("java.time.Duration")
+
+            for parameter in method.parameters:
+                if parameter.type.name == DateType.name:
+                    imports.add("java.time.LocalDate")
+                elif parameter.type.name == DateTimeType.name:
+                    imports.add("java.time.LocalDateTime")
+                elif parameter.type.name == TimeType.name:
+                    imports.add("java.time.LocalTime")
+                elif parameter.type.name == TimeDeltaType.name:
+                    imports.add("java.time.Duration")
 
         for relation in relations:
             if relation["is_list"]:
