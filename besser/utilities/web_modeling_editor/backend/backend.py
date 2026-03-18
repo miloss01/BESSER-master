@@ -986,7 +986,7 @@ async def _generate_spring(buml_model, generator_class, config: dict, temp_dir: 
         generator_instance = generator_class(
             model=buml_model,
             spring_boot_version=config["spring_boot_version"],
-            java_version="17",
+            java_version=config["java_version"],
             app_name=config["app_name"],
             package_name=config["package_name"],
             output_dir=project_dir,
