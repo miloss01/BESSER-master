@@ -4,7 +4,7 @@ from typing import List
 
 from jinja2 import Environment, FileSystemLoader
 
-from besser.BUML.metamodel.structural.structural import BooleanType, Class, DateTimeType, DateType, DomainModel, Enumeration, FloatType, IntegerType, StringType, TimeDeltaType, TimeType
+from besser.BUML.metamodel.structural.structural import BooleanType, Class, DateTimeType, DateType, DomainModel, Enumeration, FloatType, IntegerType, Property, StringType, TimeDeltaType, TimeType
 from besser.generators.generator_interface import GeneratorInterface
 
 class SpringRepositoryGenerator(GeneratorInterface):
@@ -37,7 +37,7 @@ class SpringRepositoryGenerator(GeneratorInterface):
                 self._generate_repository_file(cls)
 
     def _generate_repository_file(self, cls: Class):
-        file_path = self.build_generation_path(file_name=f"I{cls.name.capitalize()}Repository.java")
+        file_path = self.build_generation_path(file_name=f"I{cls.name[0].upper() + cls.name[1:]}Repository.java")
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path), trim_blocks=True)
@@ -64,7 +64,7 @@ class SpringRepositoryGenerator(GeneratorInterface):
             method: object = {}
 
             method["return_value"] = f"ArrayList<{cls.name}>"
-            method["name"] = f"findAllBy{attr.name.capitalize()}"
+            method["name"] = f"findAllBy{attr.name[0].upper() + attr.name[1:]}"
 
             if is_enum or is_class:
                 parameter_type = attr.type.name
@@ -84,17 +84,20 @@ class SpringRepositoryGenerator(GeneratorInterface):
             if attr.type.name in [DateType.name, DateTimeType.name, TimeType.name]:
                 methods.append({
                     "return_value": f"ArrayList<{cls.name}>",
-                    "name": f"findAllBy{attr.name.capitalize()}Between",
+                    "name": f"findAllBy{attr.name[0].upper() + attr.name[1:]}Between",
                     "parameter": f"{parameter_type} start, {parameter_type} end"
                 })
 
             methods.append(method)
 
+        id_attr: Property = next(attr for attr in cls.all_attributes() if attr.is_id)
+
         context = {
             "package": f"{self.package_name}",
             "imports": sorted(imports),
             "cls": cls.name,
-            "methods": sorted(methods, key=lambda m: m["name"])
+            "methods": sorted(methods, key=lambda m: m["name"]),
+            "id_type": self.JAVA_TYPES[id_attr.type.name]
         }
 
         with open(file_path, mode="w", encoding="utf-8") as f:

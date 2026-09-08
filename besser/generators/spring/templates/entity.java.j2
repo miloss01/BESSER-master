@@ -90,11 +90,11 @@ public{% if is_abstract %} abstract{% endif %} class {{ cls.name }}{% if parent 
     {% endfor -%}
 
     {% for attribute in attributes %}
-    public {{ attribute.type }} get{{ attribute.name | capitalize }}() {
+    public {{ attribute.type }} get{{ attribute.name[0] | upper + attribute.name[1:] }}() {
         return this.{{ attribute.name }};
     }
 
-    public void set{{ attribute.name | capitalize }}({{ attribute.type }} {{ attribute.name }}) {
+    public void set{{ attribute.name[0] | upper + attribute.name[1:] }}({{ attribute.type }} {{ attribute.name }}) {
         this.{{ attribute.name }} = {{ attribute.name }};
     }
     {% endfor %}

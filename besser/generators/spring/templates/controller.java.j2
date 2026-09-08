@@ -17,7 +17,7 @@ public class {{ cls }}Controller {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<{{ cls }}> getById(@PathVariable Integer id) {
+    public ResponseEntity<{{ cls }}> getById(@PathVariable {{ id_type }} id) {
         return _{{ cls[0] | lower + cls[1:] }}Service.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -28,7 +28,7 @@ public class {{ cls }}Controller {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<{{ cls }}> update(@PathVariable Integer id, @RequestBody {{ cls }} entity) {
+    public ResponseEntity<{{ cls }}> update(@PathVariable {{ id_type }} id, @RequestBody {{ cls }} entity) {
 
         Optional<{{ cls }}> existing = _{{ cls[0] | lower + cls[1:] }}Service.findById(id);
 
@@ -43,7 +43,7 @@ public class {{ cls }}Controller {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteById(@PathVariable {{ id_type }} id) {
 
         Optional<{{ cls }}> existing = _{{ cls[0] | lower + cls[1:] }}Service.findById(id);
 

@@ -46,7 +46,7 @@ class SpringEntityGenerator(GeneratorInterface):
             self._generate_class_file(cls, assoc_map[cls.name])
 
     def _generate_class_file(self, cls: Class, assocs_for_class: List[BinaryAssociation]):
-        file_path = self.build_generation_path(file_name=f"{cls.name.capitalize()}.java")
+        file_path = self.build_generation_path(file_name=f"{cls.name[0].upper() + cls.name[1:]}.java")
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path))
         entity_template = env.get_template("entity.java.j2")
@@ -235,14 +235,14 @@ class SpringEntityGenerator(GeneratorInterface):
         return ret
 
     def _generate_enum_file(self, enum: Enumeration):
-        file_path = self.build_generation_path(file_name=f"{enum.name.capitalize()}.java")
+        file_path = self.build_generation_path(file_name=f"{enum.name[0].upper() + enum.name[1:]}.java")
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path))
         entity_template = env.get_template("enum.java.j2")
 
         context = {
             "package_name": self.package_name,
-            "name": enum.name.capitalize(),
+            "name": enum.name[0].upper() + enum.name[1:],
             "literals": enum.literals
         }
 

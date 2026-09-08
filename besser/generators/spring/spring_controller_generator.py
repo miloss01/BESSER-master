@@ -4,10 +4,21 @@ from typing import List
 
 from jinja2 import Environment, FileSystemLoader
 
-from besser.BUML.metamodel.structural.structural import BooleanType, Class, DateTimeType, DateType, DomainModel, Enumeration, FloatType, IntegerType, StringType, TimeDeltaType, TimeType
+from besser.BUML.metamodel.structural.structural import BooleanType, Class, DateTimeType, DateType, DomainModel, Enumeration, FloatType, IntegerType, Property, StringType, TimeDeltaType, TimeType
 from besser.generators.generator_interface import GeneratorInterface
 
 class SpringControllerGenerator(GeneratorInterface):
+
+    JAVA_TYPES = {
+        StringType.name: "String",
+        BooleanType.name: "Boolean",
+        IntegerType.name: "Integer",
+        FloatType.name: "Float",
+        DateType.name: "LocalDate",
+        DateTimeType.name: "LocalDateTime",
+        TimeType.name: "LocalTime",
+        TimeDeltaType.name: "Duration"
+    }
 
     def __init__(self, model: DomainModel, 
                  entity_package_name: str,
@@ -28,7 +39,7 @@ class SpringControllerGenerator(GeneratorInterface):
                 self._generate_controller_file(cls)
 
     def _generate_controller_file(self, cls: Class):
-        file_path = self.build_generation_path(file_name=f"{cls.name.capitalize()}Controller.java")
+        file_path = self.build_generation_path(file_name=f"{cls.name[0].upper() + cls.name[1:]}Controller.java")
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path), trim_blocks=True)
@@ -47,13 +58,16 @@ class SpringControllerGenerator(GeneratorInterface):
         imports.add("org.springframework.http.ResponseEntity")
         imports.add("java.util.Optional")
         imports.add("java.util.List")
-        imports.add(f"{self.service_package_name}.interfaces.I{cls.name.capitalize()}Service")
+        imports.add(f"{self.service_package_name}.interfaces.I{cls.name[0].upper() + cls.name[1:]}Service")
         imports.add(f"{self.entity_package_name}.{cls.name}")
 
+        id_attr: Property = next(attr for attr in cls.all_attributes() if attr.is_id)
+        
         context = {
             "package": f"{self.package_name}",
             "imports": sorted(imports),
-            "cls": cls.name
+            "cls": cls.name,
+            "id_type": self.JAVA_TYPES[id_attr.type.name]
         }
 
         with open(file_path, mode="w", encoding="utf-8") as f:

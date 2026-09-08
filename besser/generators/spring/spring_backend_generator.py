@@ -93,7 +93,7 @@ class SpringBackendGenerator(GeneratorInterface):
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path))
 
-        file_path = self.build_generation_path(file_name=Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / f"{self.app_name.capitalize()}.java")
+        file_path = self.build_generation_path(file_name=Path("src", "main", "java") / Path().joinpath(*self.package_name.split(".")) / f"{self.app_name[0].upper() + self.app_name[1:]}.java")
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         main_template = env.get_template("main.java.j2")
 
@@ -106,7 +106,7 @@ class SpringBackendGenerator(GeneratorInterface):
             generated_code = main_template.render(**context)
             f.write(generated_code)
 
-        file_path = self.build_generation_path(file_name=Path("src", "test", "java") / Path().joinpath(*self.package_name.split(".")) / f"{self.app_name.capitalize()}Tests.java")
+        file_path = self.build_generation_path(file_name=Path("src", "test", "java") / Path().joinpath(*self.package_name.split(".")) / f"{self.app_name[0].upper() + self.app_name[1:]}Tests.java")
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         test_template = env.get_template("test.java.j2")
 

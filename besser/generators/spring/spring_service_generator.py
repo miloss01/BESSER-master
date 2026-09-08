@@ -4,7 +4,7 @@ from typing import List
 
 from jinja2 import Environment, FileSystemLoader
 
-from besser.BUML.metamodel.structural.structural import BooleanType, Class, DateTimeType, DateType, DomainModel, Enumeration, FloatType, IntegerType, StringType, TimeDeltaType, TimeType
+from besser.BUML.metamodel.structural.structural import BooleanType, Class, DateTimeType, DateType, DomainModel, Enumeration, FloatType, IntegerType, Property, StringType, TimeDeltaType, TimeType
 from besser.generators.generator_interface import GeneratorInterface
 
 class SpringServiceGenerator(GeneratorInterface):
@@ -42,7 +42,7 @@ class SpringServiceGenerator(GeneratorInterface):
         templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(templates_path), trim_blocks=True)
 
-        file_path = self.build_generation_path(file_name=Path("interfaces") / f"I{cls.name.capitalize()}Service.java")
+        file_path = self.build_generation_path(file_name=Path("interfaces") / f"I{cls.name[0].upper() + cls.name[1:]}Service.java")
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         iservice_template = env.get_template("iservice.java.j2")
 
@@ -67,7 +67,7 @@ class SpringServiceGenerator(GeneratorInterface):
             method: object = {}
 
             method["return_value"] = f"ArrayList<{cls.name}>"
-            method["name"] = f"findAllBy{attr.name.capitalize()}"
+            method["name"] = f"findAllBy{attr.name[0].upper() + attr.name[1:]}"
 
             if is_enum or is_class:
                 parameter_type = attr.type.name
@@ -87,7 +87,7 @@ class SpringServiceGenerator(GeneratorInterface):
             if attr.type.name in [DateType.name, DateTimeType.name, TimeType.name]:
                 methods.append({
                     "return_value": f"ArrayList<{cls.name}>",
-                    "name": f"findAllBy{attr.name.capitalize()}Between",
+                    "name": f"findAllBy{attr.name[0].upper() + attr.name[1:]}Between",
                     "parameter": f"{parameter_type} start, {parameter_type} end"
                 })
 
@@ -106,7 +106,7 @@ class SpringServiceGenerator(GeneratorInterface):
             generated_code = iservice_template.render(**context)
             f.write(generated_code)
 
-        file_path = self.build_generation_path(file_name=Path("impl") / f"{cls.name.capitalize()}Service.java")
+        file_path = self.build_generation_path(file_name=Path("impl") / f"{cls.name[0].upper() + cls.name[1:]}Service.java")
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         service_template = env.get_template("service.java.j2")
 
@@ -114,8 +114,8 @@ class SpringServiceGenerator(GeneratorInterface):
 
         imports.add("org.springframework.beans.factory.annotation.Autowired")
         imports.add("org.springframework.stereotype.Service")
-        imports.add(f"{self.package_name}.interfaces.I{cls.name.capitalize()}Service")
-        imports.add(f"{self.repository_package_name}.I{cls.name.capitalize()}Repository")
+        imports.add(f"{self.package_name}.interfaces.I{cls.name[0].upper() + cls.name[1:]}Service")
+        imports.add(f"{self.repository_package_name}.I{cls.name[0].upper() + cls.name[1:]}Repository")
 
         context["imports"] = sorted(imports)
 
@@ -129,6 +129,8 @@ class SpringServiceGenerator(GeneratorInterface):
             f.write(generated_code)
 
     def _get_crud_methods(self, cls: Class) -> List[object]:
+        id_attr: Property = next(attr for attr in cls.all_attributes() if attr.is_id)
+        
         return [
             {
                 "return_value": f"List<{cls.name}>",
@@ -138,7 +140,7 @@ class SpringServiceGenerator(GeneratorInterface):
             {
                 "return_value": f"Optional<{cls.name}>",
                 "name": "findById",
-                "parameter": "Integer id"
+                "parameter": f"{self.JAVA_TYPES[id_attr.type.name]} {id_attr.name}"
             },
             {
                 "return_value": f"{cls.name}",
